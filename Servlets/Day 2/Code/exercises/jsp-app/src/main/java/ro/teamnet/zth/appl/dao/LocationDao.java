@@ -10,12 +10,14 @@ public class LocationDao {
 
     EntityManager entityManager = new EntityManagerImpl();
 
+
     /**
      *
      * @param location
      * @return location object
      */
     public Location insertLocation(Location location) {
+
         return (Location) entityManager.insert(location);
     }
 
