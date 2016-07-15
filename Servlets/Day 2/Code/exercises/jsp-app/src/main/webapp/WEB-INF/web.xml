@@ -6,6 +6,15 @@
 
   <display-name>Archetype Created Web Application</display-name>
 
+    <filter>
+        <filter-name>logHeaders</filter-name>
+        <filter-class>ro.teamnet.zth.web.HeadersLogFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>logHeaders</filter-name>
+        <servlet-name>HelloWorld</servlet-name>
+    </filter-mapping>
+
     <servlet>
         <servlet-name>HelloWorld</servlet-name>
         <servlet-class>ro.teamnet.zth.web.HelloWorldServlet</servlet-class>
@@ -19,7 +28,6 @@
         <servlet-name>HelloWorldForward</servlet-name>
         <servlet-class>ro.teamnet.zth.web.HelloWorldServletForward</servlet-class>
     </servlet>
-
     <servlet-mapping>
         <servlet-name>HelloWorldForward</servlet-name>
         <url-pattern>/helloforward</url-pattern>
@@ -29,7 +37,6 @@
         <servlet-name>includeServlet</servlet-name>
         <servlet-class>ro.teamnet.zth.web.HttpServletInclude</servlet-class>
     </servlet>
-
     <servlet-mapping>
         <servlet-name>includeServlet</servlet-name>
         <url-pattern>/include</url-pattern>

@@ -15,11 +15,11 @@ public class EntityManagerImpl {
         long returned = 0;
         try(Connection cn = DBManager.getConnection();
             Statement st = cn.createStatement() ){
-            ResultSet rs = st.executeQuery("SELECT " + "max(" + columnIdName + ") from" + tableName );//select mx(id_column) + 1 from tableNme
+            ResultSet rs = st.executeQuery("SELECT " + "max(" + columnIdName + ") from " + tableName );//select mx(id_column) + 1 from tableNme
             rs.next();
             returned = rs.getInt(1);
         } catch (SQLException e) {
-
+            return -1;
         }
         return returned + 1;
     }

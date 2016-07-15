@@ -13,8 +13,5 @@ public class DBManagerTest {
     public void testGetConnection() {
         assertNotEquals("a", null, DBManager.getConnection());
     }
-    @Test
-    public void testCheckConnection() {
-        assertEquals("con", true, DBManager.checkConnection());
-    }
+
 }
