@@ -1,7 +1,11 @@
 package ro.teamnet.zth;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import ro.teamnet.zth.api.annotations.MyController;
 import ro.teamnet.zth.api.annotations.MyRequestMethod;
+import ro.teamnet.zth.api.annotations.MyRequestParam;
 import ro.teamnet.zth.fmk.AnnotationScanUtils;
 import ro.teamnet.zth.fmk.MethodAttributes;
 
@@ -10,9 +14,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by user on 7/14/2016.
@@ -45,6 +53,7 @@ public class MyDispatcherServlet extends HttpServlet {
                             methodAttributes.setControllerClass(controller.getName());
                             methodAttributes.setMethodType(mrm.methodType());
                             methodAttributes.setMethodName(iter.getName());
+                            methodAttributes.setParameterTypes(iter.getParameterTypes());
 
                             allowedMethods.put(completePath, methodAttributes);
 
@@ -99,8 +108,21 @@ public class MyDispatcherServlet extends HttpServlet {
             try {
                 Class<?> controllerClass = Class.forName(cn);
                 Object controllerIns = controllerClass.newInstance();
-                Method method = controllerClass.getMethod(ma.getMethodName());
-                obj = method.invoke(controllerIns);
+                Method method = controllerClass.getMethod(ma.getMethodName(), ma.getParameterTypes());
+
+                Parameter[] params = method.getParameters();
+                List<Object> listaDeParametrii = new ArrayList<Object>();
+                for(Parameter e : params) {
+                    if(e.isAnnotationPresent(MyRequestParam.class)) {
+                        MyRequestParam annotation = e.getAnnotation(MyRequestParam.class);
+                        String name = annotation.name();
+                        String requestParamValue = req.getParameter(name);
+                        Class<?> type = e.getType();
+                        Object requestParamObject = new ObjectMapper().readValue(requestParamValue, type);
+                        listaDeParametrii.add(requestParamObject);
+                    }
+                }
+                obj = method.invoke(controllerIns, listaDeParametrii.toArray());
                 return obj;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
@@ -112,6 +134,12 @@ public class MyDispatcherServlet extends HttpServlet {
                 e.printStackTrace();
             }catch (InvocationTargetException e) {
                 e.printStackTrace();
+            } catch (JsonParseException e) {
+                e.printStackTrace();
+            } catch (JsonMappingException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
         return "default";
@@ -119,8 +147,12 @@ public class MyDispatcherServlet extends HttpServlet {
     }
 
     private void reply(Object o, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.getWriter().write((String) o);
-//        resp.getWriter().printf(allowedMethods.toString());
+
+        ObjectMapper om = new ObjectMapper();
+        String nou = om.writeValueAsString(o);
+        PrintWriter out = resp.getWriter();
+        out.print( nou );
+
     }
 
     private void sendExceptionError(Exception ex, HttpServletRequest req, HttpServletResponse resp) {
