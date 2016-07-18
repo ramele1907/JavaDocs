@@ -6,6 +6,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import ro.teamnet.zth.api.annotations.MyController;
 import ro.teamnet.zth.api.annotations.MyRequestMethod;
 import ro.teamnet.zth.api.annotations.MyRequestParam;
+import ro.teamnet.zth.api.annotations.MyService;
 import ro.teamnet.zth.fmk.AnnotationScanUtils;
 import ro.teamnet.zth.fmk.MethodAttributes;
 
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -84,6 +86,11 @@ public class MyDispatcherServlet extends HttpServlet {
 
     }
 
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        dispatchReply("DELETE", req, resp);
+    }
+
     private void dispatchReply(String command, HttpServletRequest req, HttpServletResponse resp) {
         Object o = null;
         try {
@@ -106,24 +113,33 @@ public class MyDispatcherServlet extends HttpServlet {
             String cn = ma.getControllerClass();
             Object obj = null;
             try {
+
                 Class<?> controllerClass = Class.forName(cn);
                 Object controllerIns = controllerClass.newInstance();
                 Method method = controllerClass.getMethod(ma.getMethodName(), ma.getParameterTypes());
 
                 Parameter[] params = method.getParameters();
                 List<Object> listaDeParametrii = new ArrayList<Object>();
+
                 for(Parameter e : params) {
+
                     if(e.isAnnotationPresent(MyRequestParam.class)) {
                         MyRequestParam annotation = e.getAnnotation(MyRequestParam.class);
                         String name = annotation.name();
                         String requestParamValue = req.getParameter(name);
                         Class<?> type = e.getType();
-                        Object requestParamObject = new ObjectMapper().readValue(requestParamValue, type);
+                        Object requestParamObject = requestParamValue;
+                        if(!type.equals(String.class)) {
+                            requestParamObject = new ObjectMapper().readValue(requestParamValue, type);
+                        }
                         listaDeParametrii.add(requestParamObject);
                     }
+
                 }
+
                 obj = method.invoke(controllerIns, listaDeParametrii.toArray());
                 return obj;
+
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (InstantiationException e) {
